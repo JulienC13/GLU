@@ -1,24 +1,53 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { useEffect } from 'react';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import '@/global.css';
+import { LoadingScreen } from '@/components/ui';
+import { AuthProvider, useAuth } from '@/providers/auth-provider';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+function RootNavigator() {
+  const { user } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  // Garde d'authentification : redirige selon l'état de connexion.
+  useEffect(() => {
+    if (user === undefined) return; // état inconnu, on attend Firebase
+    const inAuthGroup = segments[0] === '(auth)';
+    if (!user && !inAuthGroup) {
+      router.replace('/(auth)/sign-in');
+    } else if (user && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [user, segments, router]);
+
+  if (user === undefined) return <LoadingScreen />;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: '#14141C' },
+        headerTintColor: '#F3EAD8',
+        headerTitleStyle: { fontWeight: '700' },
+        contentStyle: { backgroundColor: '#14141C' },
+        headerShadowVisible: false,
+      }}
+    >
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="workout/new" options={{ title: 'Nouvelle séance', presentation: 'modal' }} />
+      <Stack.Screen name="session/[workoutId]" options={{ title: 'Entraînement', headerBackVisible: false, gestureEnabled: false }} />
+      <Stack.Screen name="history/[sessionId]" options={{ title: 'Détail de la séance' }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <StatusBar style="light" />
+      <RootNavigator />
+    </AuthProvider>
   );
 }

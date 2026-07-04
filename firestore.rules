@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Chaque utilisateur ne peut lire/écrire que ses propres données.
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.xp == 0;
+      allow update: if request.auth != null && request.auth.uid == userId
+        // L'XP ne peut jamais diminuer côté client.
+        && request.resource.data.xp >= resource.data.xp;
+      allow delete: if false;
+
+      match /workouts/{workoutId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /sessions/{sessionId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+        // L'historique est immuable : pas de réécriture des séances passées.
+        allow update, delete: if false;
+      }
+
+      match /records/{recordId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
