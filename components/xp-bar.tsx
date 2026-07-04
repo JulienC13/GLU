@@ -10,9 +10,7 @@ export function XpBar({ xp }: { xp: number }) {
   return (
     <View className="w-full">
       <View className="flex-row items-center justify-between">
-        <Text className="text-paper font-bold text-base">
-          {tier.kanji} {tier.name}
-        </Text>
+        <Text className="text-paper font-bold text-base">{tier.name}</Text>
         <Text className="text-gold font-semibold text-sm">{xp.toLocaleString('fr-FR')} XP</Text>
       </View>
       <View className="mt-2 h-3 w-full overflow-hidden rounded-full bg-sumi-light border border-sumi-border">

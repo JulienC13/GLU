@@ -3,14 +3,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Comptes admin (accès Labo : réglage libre de l'XP, réinitialisation).
+    // Garder cette liste synchronisée avec ADMIN_EMAILS dans lib/admin.ts.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in ['j.charpentierdev@gmail.com'];
+    }
+
     // Chaque utilisateur ne peut lire/écrire que ses propres données.
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null && request.auth.uid == userId
         && request.resource.data.xp == 0;
       allow update: if request.auth != null && request.auth.uid == userId
-        // L'XP ne peut jamais diminuer côté client.
-        && request.resource.data.xp >= resource.data.xp;
+        // L'XP ne peut jamais diminuer côté client — sauf pour un admin (sandbox).
+        && (request.resource.data.xp >= resource.data.xp || isAdmin());
       allow delete: if false;
 
       match /workouts/{workoutId} {
@@ -19,8 +26,10 @@ service cloud.firestore {
 
       match /sessions/{sessionId} {
         allow read, create: if request.auth != null && request.auth.uid == userId;
-        // L'historique est immuable : pas de réécriture des séances passées.
-        allow update, delete: if false;
+        // L'historique est immuable : pas de réécriture des séances passées —
+        // seul un admin peut purger son propre compte depuis le Labo.
+        allow update: if false;
+        allow delete: if request.auth != null && request.auth.uid == userId && isAdmin();
       }
 
       match /records/{recordId} {

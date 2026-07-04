@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 
 import { Button, Card, LoadingScreen } from '@/components/ui';
-import { formatWeight } from '@/lib/format';
+import { seedDefaultWorkouts } from '@/lib/default-workouts';
+import { formatRest, formatWeight } from '@/lib/format';
 import type { Workout } from '@/lib/types';
 import { deleteWorkout, duplicateWorkout, watchWorkouts } from '@/lib/workouts';
 import { useAuth } from '@/providers/auth-provider';
@@ -44,12 +45,18 @@ export default function WorkoutsScreen() {
         keyExtractor={(w) => w.id}
         contentContainerClassName="p-5 pb-28"
         ListEmptyComponent={
-          <View className="items-center mt-20 px-8">
+          <View className="items-center mt-16 px-8">
             <Text className="text-5xl mb-4">🥋</Text>
             <Text className="text-paper text-lg font-bold text-center">Aucune séance pour l'instant</Text>
             <Text className="text-paper-faint text-sm text-center mt-2">
               Crée ta première séance avec tes exercices, puis lance-la pour gagner de l'XP.
             </Text>
+            <Button
+              title="Ajouter les séances d'exemple"
+              variant="ghost"
+              className="mt-6 self-stretch"
+              onPress={() => void seedDefaultWorkouts(user!.uid)}
+            />
           </View>
         }
         renderItem={({ item }) => (
@@ -69,7 +76,8 @@ export default function WorkoutsScreen() {
             <View className="mt-3">
               {item.exercises.slice(0, 3).map((ex) => (
                 <Text key={ex.id} className="text-paper-dim text-sm" numberOfLines={1}>
-                  • {ex.name} — {formatWeight(ex.weight)} × {ex.reps} reps × {ex.sets} séries
+                  • {ex.name} — {formatWeight(ex.weight)} × {ex.reps} reps × {ex.sets} séries — repos{' '}
+                  {formatRest(ex.restSec)}
                 </Text>
               ))}
               {item.exercises.length > 3 && (

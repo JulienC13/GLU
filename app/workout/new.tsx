@@ -1,9 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Button, Card, Field, LoadingScreen } from '@/components/ui';
+import { setExercisePickerCallback } from '@/lib/exercise-db';
 import { db } from '@/lib/firebase';
 import type { ExerciseTemplate, Workout } from '@/lib/types';
 import { createWorkout, updateWorkout } from '@/lib/workouts';
@@ -74,6 +76,12 @@ export default function WorkoutEditorScreen() {
     setExercises((list) => (list.length > 1 ? list.filter((ex) => ex.id !== exId) : list));
   }
 
+  /** Ouvre la bibliothèque d'exercices et remplit le nom au retour. */
+  function openLibrary(exId: string) {
+    setExercisePickerCallback((exercise) => updateExercise(exId, { name: exercise.name }));
+    router.push('/exercise-picker');
+  }
+
   async function onSave() {
     if (!user) return;
     if (!name.trim()) {
@@ -130,11 +138,21 @@ export default function WorkoutEditorScreen() {
                   </Pressable>
                 )}
               </View>
-              <Field
-                value={ex.name}
-                onChangeText={(v) => updateExercise(ex.id, { name: v })}
-                placeholder="Développé couché"
-              />
+              <View className="flex-row items-end gap-2">
+                <Field
+                  value={ex.name}
+                  onChangeText={(v) => updateExercise(ex.id, { name: v })}
+                  placeholder="Développé couché"
+                  className="flex-1"
+                />
+                <Pressable
+                  onPress={() => openLibrary(ex.id)}
+                  accessibilityLabel="Choisir dans la bibliothèque d'exercices"
+                  className="h-12 w-12 items-center justify-center rounded-xl border border-sumi-border bg-sumi-light active:opacity-70"
+                >
+                  <Ionicons name="search" size={20} color="#D9A441" />
+                </Pressable>
+              </View>
               <View className="flex-row gap-3 mt-3">
                 <Field
                   label="Poids (kg)"
@@ -163,7 +181,7 @@ export default function WorkoutEditorScreen() {
                   className="flex-1"
                 />
                 <Field
-                  label="Repos (sec)"
+                  label="Repos (secondes)"
                   value={ex.restSec}
                   onChangeText={(v) => updateExercise(ex.id, { restSec: v })}
                   keyboardType="number-pad"

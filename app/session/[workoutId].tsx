@@ -16,7 +16,7 @@ import {
 import { RestTimer } from '@/components/rest-timer';
 import { Button, Card, LoadingScreen } from '@/components/ui';
 import { db } from '@/lib/firebase';
-import { formatWeight } from '@/lib/format';
+import { formatRest, formatWeight } from '@/lib/format';
 import { completeSession } from '@/lib/sessions';
 import type { SessionExercise, Workout } from '@/lib/types';
 import { useAuth } from '@/providers/auth-provider';
@@ -194,14 +194,15 @@ export default function LiveSessionScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <ScrollView contentContainerClassName="p-5 pb-40" keyboardShouldPersistTaps="handled">
           <Text className="text-paper-faint text-sm mb-4">
-            {doneCount}/{totalCount} séries validées — chaque série compte. 頑張って !
+            {doneCount}/{totalCount} séries validées — chaque série compte.
           </Text>
 
           {exercises.map((ex, exIndex) => (
             <Card key={`${ex.name}-${exIndex}`} className="mb-4">
               <Text className="text-paper text-lg font-bold">{ex.name}</Text>
               <Text className="text-paper-faint text-xs mt-0.5">
-                Objectif : {formatWeight(ex.targetWeight)} × {ex.targetReps} reps — repos {ex.restSec}s
+                Objectif : {formatWeight(ex.targetWeight)} × {ex.targetReps} reps — repos{' '}
+                {formatRest(ex.restSec)}
               </Text>
 
               <View className="flex-row mt-4 mb-1 pr-12">

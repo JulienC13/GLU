@@ -1,9 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
 import { Button, Card } from '@/components/ui';
 import { XpBar } from '@/components/xp-bar';
+import { isAdminUser } from '@/lib/admin';
 import { TIERS, tierForXp } from '@/lib/xp';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -30,14 +32,20 @@ export default function DojoScreen() {
           <Text className="text-paper-faint text-sm">Bienvenue au dojo</Text>
           <Text className="text-paper text-2xl font-extrabold">{name}</Text>
         </View>
-        <Pressable onPress={confirmSignOut} hitSlop={12} accessibilityLabel="Se déconnecter">
-          <Text className="text-paper-faint text-2xl">⏻</Text>
-        </Pressable>
+        <View className="flex-row items-center gap-5">
+          {isAdminUser(user) && (
+            <Pressable onPress={() => router.push('/admin')} hitSlop={12} accessibilityLabel="Labo admin">
+              <Ionicons name="flask-outline" size={24} color="#D9A441" />
+            </Pressable>
+          )}
+          <Pressable onPress={confirmSignOut} hitSlop={12} accessibilityLabel="Se déconnecter">
+            <Ionicons name="log-out-outline" size={26} color="#B8B0A0" />
+          </Pressable>
+        </View>
       </View>
 
       {/* Avatar + palier */}
       <Card className="mt-5 items-center py-6">
-        <Text className="text-gold text-5xl font-black mb-1">{tier.kanji}</Text>
         <Avatar xp={xp} size={190} />
         <Text className="text-paper text-xl font-extrabold mt-2">{tier.name}</Text>
         <Text className="text-paper-faint text-xs mt-1 text-center px-6">{tier.description}</Text>
@@ -58,7 +66,7 @@ export default function DojoScreen() {
         </Card>
       </View>
 
-      <Button title="⛩️  Commencer l'entraînement" onPress={() => router.push('/(tabs)/workouts')} className="mt-5" />
+      <Button title="Commencer l'entraînement" onPress={() => router.push('/(tabs)/workouts')} className="mt-5" />
 
       {/* Paliers */}
       <Text className="text-paper font-bold text-lg mt-8 mb-3">La voie du guerrier</Text>
@@ -72,7 +80,11 @@ export default function DojoScreen() {
               current ? 'border-torii bg-sumi-card' : 'border-sumi-border bg-sumi-light'
             } ${reached ? '' : 'opacity-50'}`}
           >
-            <Text className="text-2xl mr-3">{reached ? t.kanji : '🔒'}</Text>
+            {/* Ceinture du grade */}
+            <View
+              className="mr-3 h-3.5 w-8 rounded-sm border border-black/30"
+              style={{ backgroundColor: t.beltColor }}
+            />
             <View className="flex-1">
               <Text className="text-paper font-semibold">{t.name}</Text>
               <Text className="text-paper-faint text-xs">
@@ -81,7 +93,11 @@ export default function DojoScreen() {
                   : `${t.minXp.toLocaleString('fr-FR')}+ XP`}
               </Text>
             </View>
-            {current && <Text className="text-torii-soft text-xs font-bold">ACTUEL</Text>}
+            {current ? (
+              <Text className="text-torii-soft text-xs font-bold">ACTUEL</Text>
+            ) : !reached ? (
+              <Ionicons name="lock-closed" size={16} color="#7E7A70" />
+            ) : null}
           </View>
         );
       })}

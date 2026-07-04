@@ -9,6 +9,7 @@ import {
 import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { seedDefaultWorkouts } from '@/lib/default-workouts';
 import { auth, db } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/types';
 
@@ -36,7 +37,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     return onSnapshot(doc(db, 'users', user.uid), (snap) => {
-      setProfile(snap.exists() ? (snap.data() as UserProfile) : null);
+      if (!snap.exists()) {
+        // Compte sans profil (inscription interrompue avant l'écriture
+        // Firestore) : on le recrée pour ne pas laisser l'app à moitié vide.
+        setDoc(doc(db, 'users', user.uid), {
+          displayName: user.displayName ?? 'Athlète',
+          email: user.email ?? '',
+          xp: 0,
+          sessionsCompleted: 0,
+          recordsCount: 0,
+          createdAt: serverTimestamp(),
+        }).catch((e) => console.warn('[GLU] Création du profil impossible', e));
+        return;
+      }
+      setProfile(snap.data() as UserProfile);
     });
   }, [user]);
 
@@ -55,6 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       recordsCount: 0,
       createdAt: serverTimestamp(),
     });
+    // Le nouveau compte démarre avec des séances d'exemple prêtes à lancer.
+    await seedDefaultWorkouts(cred.user.uid).catch((e) =>
+      console.warn('[GLU] Séances par défaut non créées', e)
+    );
   }
 
   async function signOut() {

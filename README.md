@@ -18,6 +18,11 @@ gagner de l'XP et fait évoluer un avatar 2D flat design, dans une ambiance dojo
 5. **Avatar évolutif** — 5 paliers : Novice (0–1000), Apprenti (1000–5000), Intermédiaire (5000–15000), Athlète (15000–30000), Hero (30000+). Silhouette, kimono, ceinture et aura évoluent.
 6. **Historique** — liste chronologique des séances, détail par séance (séries réalisées, XP, améliorations) et records personnels mis en avant.
 
+En plus :
+- **Séances par défaut** — 3 séances d'exemple (Full Body, Haut du corps, Bas du corps) créées à l'inscription.
+- **Bibliothèque d'exercices** — recherche d'exercices via l'API publique [wger](https://wger.de) (noms français, sans clé API), avec liste locale intégrée en secours hors ligne.
+- **Labo admin** — sandbox réservé aux emails listés dans `lib/admin.ts` : réglage libre de l'XP, saut de palier, aperçu des 5 grades, réinjection des séances par défaut, réinitialisation du compte. Accessible via l'icône fiole 🧪 sur l'écran Dojo.
+
 Hors scope (volontairement) : coach IA, interface coach, mini-jeu, shop, vidéos, monnaie in-app.
 
 ## Mise en route
@@ -39,11 +44,13 @@ cp .env.example .env
 ### 3. Déployer les règles Firestore
 
 ```bash
-npm install -g firebase-tools
-firebase login
-firebase use <votre-project-id>
-firebase deploy --only firestore:rules
+npx firebase-tools login
+npx firebase-tools use --add     # choisir votre projet
+npx firebase-tools deploy --only firestore:rules
 ```
+
+> ⚠️ À refaire après chaque modification de `firestore.rules` (par exemple pour
+> ajouter un email admin dans `isAdmin()` — à garder synchronisé avec `lib/admin.ts`).
 
 ### 4. Lancer l'app
 

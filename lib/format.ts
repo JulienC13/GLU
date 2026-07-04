@@ -31,6 +31,14 @@ export function formatDuration(totalSec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/** "1 min 30 s" pour 90 secondes, "45 s" pour 45, "2 min" pour 120. */
+export function formatRest(totalSec: number): string {
+  if (totalSec < 60) return `${totalSec} s`;
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return s === 0 ? `${m} min` : `${m} min ${s} s`;
+}
+
 /** Identifiant stable pour un exercice ("Développé couché" -> "developpe-couche") */
 export function exerciseSlug(name: string): string {
   return (

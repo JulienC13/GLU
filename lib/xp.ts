@@ -13,7 +13,6 @@ export const XP_RECORD_BROKEN = 30;
 export type Tier = {
   key: 'novice' | 'apprenti' | 'intermediaire' | 'athlete' | 'hero';
   name: string;
-  kanji: string;
   minXp: number;
   /** Exclus — Infinity pour le dernier palier */
   maxXp: number;
@@ -26,7 +25,6 @@ export const TIERS: Tier[] = [
   {
     key: 'novice',
     name: 'Novice',
-    kanji: '初',
     minXp: 0,
     maxXp: 1000,
     beltColor: '#F3EAD8',
@@ -35,7 +33,6 @@ export const TIERS: Tier[] = [
   {
     key: 'apprenti',
     name: 'Apprenti',
-    kanji: '学',
     minXp: 1000,
     maxXp: 5000,
     beltColor: '#D9A441',
@@ -44,7 +41,6 @@ export const TIERS: Tier[] = [
   {
     key: 'intermediaire',
     name: 'Intermédiaire',
-    kanji: '中',
     minXp: 5000,
     maxXp: 15000,
     beltColor: '#5B84B1',
@@ -53,7 +49,6 @@ export const TIERS: Tier[] = [
   {
     key: 'athlete',
     name: 'Athlète',
-    kanji: '武',
     minXp: 15000,
     maxXp: 30000,
     beltColor: '#C9403A',
@@ -62,7 +57,6 @@ export const TIERS: Tier[] = [
   {
     key: 'hero',
     name: 'Hero',
-    kanji: '英',
     minXp: 30000,
     maxXp: Infinity,
     beltColor: '#1C1C24',

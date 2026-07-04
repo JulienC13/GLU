@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { Card, LoadingScreen } from '@/components/ui';
-import { formatDateTime, formatWeight } from '@/lib/format';
+import { formatDateTime, formatRest, formatWeight } from '@/lib/format';
 import { watchSession } from '@/lib/sessions';
 import type { Session } from '@/lib/types';
 import { useAuth } from '@/providers/auth-provider';
@@ -100,7 +100,8 @@ export default function SessionDetailScreen() {
             )}
           </View>
           <Text className="text-paper-faint text-xs mt-0.5">
-            Objectif : {formatWeight(ex.targetWeight)} × {ex.targetReps} reps — repos {ex.restSec}s
+            Objectif : {formatWeight(ex.targetWeight)} × {ex.targetReps} reps — repos{' '}
+            {formatRest(ex.restSec)}
           </Text>
           <View className="mt-3">
             {ex.sets.map((set, j) => (

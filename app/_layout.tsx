@@ -37,6 +37,8 @@ function RootNavigator() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="workout/new" options={{ title: 'Nouvelle séance', presentation: 'modal' }} />
+      <Stack.Screen name="exercise-picker" options={{ title: "Bibliothèque d'exercices", presentation: 'modal' }} />
+      <Stack.Screen name="admin" options={{ title: 'Labo admin' }} />
       <Stack.Screen name="session/[workoutId]" options={{ title: 'Entraînement', headerBackVisible: false, gestureEnabled: false }} />
       <Stack.Screen name="history/[sessionId]" options={{ title: 'Détail de la séance' }} />
     </Stack>
