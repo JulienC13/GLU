@@ -1,18 +1,28 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 /**
- * Bibliothèque d'exercices.
+ * Bibliothèque d'exercices — deux sources complémentaires :
  *
- * Recherche via l'API publique wger (https://wger.de — open source, sans clé,
- * avec noms français), avec repli sur une liste locale intégrée si le réseau
- * est indisponible ou que l'API ne répond pas.
+ *  - Une liste française "rapide" (LOCAL_EXERCISES), sans image, pour une
+ *    saisie instantanée hors ligne.
+ *  - Une base enrichie en anglais avec photo + instructions détaillées,
+ *    chargée depuis le jeu de données ouvert free-exercise-db
+ *    (https://github.com/yuhonas/free-exercise-db, ~800 exercices, gratuit,
+ *    sans clé API), mise en cache localement après le premier chargement.
  */
 
 export type LibraryExercise = {
   id: string;
   name: string;
   category: string;
+  imageUrl?: string;
+  description?: string;
+  level?: string;
+  equipment?: string;
+  primaryMuscles?: string[];
 };
 
-/** Liste locale de secours — les classiques de la salle. */
+/** Liste locale de secours — les classiques de la salle, en français. */
 export const LOCAL_EXERCISES: LibraryExercise[] = [
   { id: 'developpe-couche', name: 'Développé couché', category: 'Pectoraux' },
   { id: 'developpe-incline', name: 'Développé incliné haltères', category: 'Pectoraux' },
@@ -59,7 +69,7 @@ function normalize(s: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-/** Filtre la liste locale par terme de recherche. */
+/** Filtre la liste locale française par terme de recherche. */
 export function searchLocalExercises(term: string): LibraryExercise[] {
   const t = normalize(term.trim());
   if (!t) return LOCAL_EXERCISES;
@@ -68,32 +78,86 @@ export function searchLocalExercises(term: string): LibraryExercise[] {
   );
 }
 
-type WgerSuggestion = {
-  value: string;
-  data: { id: number; name: string; category: string };
+// --- Base enrichie (free-exercise-db) : photo + instructions, en anglais.
+
+const EXERCISES_JSON_URL = 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/dist/exercises.json';
+const IMAGE_BASE_URL = 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/';
+const STORAGE_KEY = 'glu_exercise_library_v1';
+
+type RawExercise = {
+  id: string;
+  name: string;
+  category: string;
+  level?: string;
+  equipment?: string | null;
+  primaryMuscles?: string[];
+  instructions?: string[];
+  images?: string[];
 };
 
+function mapRaw(e: RawExercise): LibraryExercise {
+  return {
+    id: `fedb-${e.id}`,
+    name: e.name,
+    category: e.category,
+    level: e.level,
+    equipment: e.equipment ?? undefined,
+    primaryMuscles: e.primaryMuscles,
+    description: e.instructions?.join('\n\n'),
+    imageUrl: e.images?.[0] ? `${IMAGE_BASE_URL}${e.images[0]}` : undefined,
+  };
+}
+
+let cachedLibrary: LibraryExercise[] | null = null;
+let loadingPromise: Promise<LibraryExercise[]> | null = null;
+
 /**
- * Recherche en ligne (API wger, français). Lève en cas d'échec réseau —
- * l'appelant retombe alors sur `searchLocalExercises`.
+ * Charge la base enrichie : cache mémoire → cache disque (hors ligne) →
+ * réseau (rafraîchit le cache disque). Ne lève jamais : renvoie [] si tout échoue.
  */
-export async function searchOnlineExercises(
-  term: string,
-  signal?: AbortSignal
-): Promise<LibraryExercise[]> {
-  const url = `https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(term)}&language=fr&format=json`;
-  const res = await fetch(url, { signal, headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`wger HTTP ${res.status}`);
-  const json = (await res.json()) as { suggestions?: WgerSuggestion[] };
-  const seen = new Set<string>();
-  const results: LibraryExercise[] = [];
-  for (const s of json.suggestions ?? []) {
-    const name = s.data?.name ?? s.value;
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
-    results.push({ id: `wger-${s.data?.id ?? name}`, name, category: s.data?.category ?? '' });
-  }
-  return results;
+export async function loadExerciseLibrary(): Promise<LibraryExercise[]> {
+  if (cachedLibrary) return cachedLibrary;
+  if (loadingPromise) return loadingPromise;
+
+  loadingPromise = (async () => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) cachedLibrary = JSON.parse(stored) as LibraryExercise[];
+    } catch {
+      // cache disque corrompu ou indisponible : on retente le réseau
+    }
+
+    try {
+      const res = await fetch(EXERCISES_JSON_URL);
+      if (res.ok) {
+        const raw = (await res.json()) as RawExercise[];
+        const mapped = raw.map(mapRaw);
+        cachedLibrary = mapped;
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mapped)).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('[GLU] Base enrichie indisponible (hors ligne ?)', e);
+    }
+
+    return cachedLibrary ?? [];
+  })();
+
+  return loadingPromise;
+}
+
+/** Filtre la base enrichie déjà chargée par nom, catégorie ou muscle ciblé. */
+export function searchExerciseLibrary(library: LibraryExercise[], term: string, limit = 30): LibraryExercise[] {
+  const t = normalize(term.trim());
+  const matches = t
+    ? library.filter(
+        (e) =>
+          normalize(e.name).includes(t) ||
+          normalize(e.category).includes(t) ||
+          (e.equipment && normalize(e.equipment).includes(t)) ||
+          e.primaryMuscles?.some((m) => normalize(m).includes(t))
+      )
+    : library;
+  return matches.slice(0, limit);
 }
 
 // --- Pont de sélection : l'éditeur enregistre un callback, l'écran de

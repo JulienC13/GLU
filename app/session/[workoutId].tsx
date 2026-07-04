@@ -17,6 +17,7 @@ import { RestTimer } from '@/components/rest-timer';
 import { Button, Card, LoadingScreen } from '@/components/ui';
 import { db } from '@/lib/firebase';
 import { formatRest, formatWeight } from '@/lib/format';
+import { cancelRestEndNotification, scheduleRestEndNotification } from '@/lib/rest-notifications';
 import { completeSession } from '@/lib/sessions';
 import type { SessionExercise, Workout } from '@/lib/types';
 import { useAuth } from '@/providers/auth-provider';
@@ -46,8 +47,15 @@ export default function LiveSessionScreen() {
   const startedAtRef = useRef(new Date());
 
   // Timer de repos : timestamp de fin, pour rester juste même si l'app rame.
-  const [rest, setRest] = useState<{ endsAt: number; total: number } | null>(null);
+  const [rest, setRest] = useState<{ endsAt: number; total: number; notifId: string | null } | null>(
+    null
+  );
   const [now, setNow] = useState(Date.now());
+  const restRef = useRef(rest);
+  restRef.current = rest;
+
+  // Annule toute notification de repos encore programmée si on quitte l'écran.
+  useEffect(() => () => void cancelRestEndNotification(restRef.current?.notifId ?? null), []);
 
   useEffect(() => {
     if (!user || !workoutId) return;
@@ -115,9 +123,29 @@ export default function LiveSessionScreen() {
       const restSec = exercises[exIndex].restSec;
       if (!isLastSet && restSec > 0) {
         setNow(Date.now());
-        setRest({ endsAt: Date.now() + restSec * 1000, total: restSec });
+        setRest({ endsAt: Date.now() + restSec * 1000, total: restSec, notifId: null });
+        void scheduleRestEndNotification(restSec).then((notifId) => {
+          setRest((r) => (r ? { ...r, notifId } : r));
+        });
       }
     }
+  }
+
+  function skipRest() {
+    void cancelRestEndNotification(rest?.notifId ?? null);
+    setRest(null);
+  }
+
+  function extendRest(seconds: number) {
+    setRest((r) => {
+      if (!r) return r;
+      void cancelRestEndNotification(r.notifId);
+      const remaining = Math.max(0, Math.ceil((r.endsAt - Date.now()) / 1000)) + seconds;
+      void scheduleRestEndNotification(remaining).then((notifId) => {
+        setRest((r2) => (r2 ? { ...r2, notifId } : r2));
+      });
+      return { ...r, endsAt: r.endsAt + seconds * 1000, notifId: null };
+    });
   }
 
   const doneCount = exercises.reduce((sum, ex) => sum + ex.sets.filter((s) => s.done).length, 0);
@@ -259,8 +287,8 @@ export default function LiveSessionScreen() {
               <RestTimer
                 secondsLeft={restSecondsLeft}
                 totalSeconds={rest.total}
-                onSkip={() => setRest(null)}
-                onExtend={(s) => setRest((r) => (r ? { ...r, endsAt: r.endsAt + s * 1000 } : r))}
+                onSkip={skipRest}
+                onExtend={extendRest}
               />
             </View>
           )}

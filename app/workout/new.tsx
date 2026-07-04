@@ -17,6 +17,7 @@ type ExerciseDraft = {
   weight: string;
   reps: string;
   sets: string;
+  restMin: string;
   restSec: string;
 };
 
@@ -27,7 +28,8 @@ function emptyExercise(): ExerciseDraft {
     weight: '',
     reps: '',
     sets: '',
-    restSec: '90',
+    restMin: '1',
+    restSec: '30',
   };
 }
 
@@ -60,7 +62,8 @@ export default function WorkoutEditorScreen() {
             weight: ex.weight ? String(ex.weight) : '',
             reps: String(ex.reps),
             sets: String(ex.sets),
-            restSec: String(ex.restSec),
+            restMin: String(Math.floor(ex.restSec / 60)),
+            restSec: String(ex.restSec % 60),
           }))
         );
       }
@@ -96,7 +99,10 @@ export default function WorkoutEditorScreen() {
         weight: parsePositive(ex.weight),
         reps: Math.max(1, Math.round(parsePositive(ex.reps, 1))),
         sets: Math.max(1, Math.round(parsePositive(ex.sets, 1))),
-        restSec: Math.max(0, Math.round(parsePositive(ex.restSec, 90))),
+        restSec: Math.max(
+          0,
+          Math.round(parsePositive(ex.restMin, 0)) * 60 + Math.round(parsePositive(ex.restSec, 0))
+        ),
       }));
     if (cleaned.length === 0) {
       Alert.alert('Exercice requis', 'Ajoute au moins un exercice avec un nom.');
@@ -180,14 +186,27 @@ export default function WorkoutEditorScreen() {
                   placeholder="4"
                   className="flex-1"
                 />
-                <Field
-                  label="Repos (secondes)"
-                  value={ex.restSec}
-                  onChangeText={(v) => updateExercise(ex.id, { restSec: v })}
-                  keyboardType="number-pad"
-                  placeholder="90"
-                  className="flex-1"
-                />
+                <View className="flex-1">
+                  <Text className="mb-1.5 text-paper-dim text-sm font-medium">Repos</Text>
+                  <View className="flex-row items-center gap-1.5">
+                    <Field
+                      value={ex.restMin}
+                      onChangeText={(v) => updateExercise(ex.id, { restMin: v })}
+                      keyboardType="number-pad"
+                      placeholder="1"
+                      className="flex-1"
+                    />
+                    <Text className="text-paper-faint text-xs">min</Text>
+                    <Field
+                      value={ex.restSec}
+                      onChangeText={(v) => updateExercise(ex.id, { restSec: v })}
+                      keyboardType="number-pad"
+                      placeholder="30"
+                      className="flex-1"
+                    />
+                    <Text className="text-paper-faint text-xs">s</Text>
+                  </View>
+                </View>
               </View>
             </Card>
           ))}
