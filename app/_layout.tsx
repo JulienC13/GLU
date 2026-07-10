@@ -7,7 +7,7 @@ import { LoadingScreen } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/providers/auth-provider';
 
 function RootNavigator() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -21,6 +21,14 @@ function RootNavigator() {
       router.replace('/(tabs)');
     }
   }, [user, segments, router]);
+
+  // Onboarding : un compte sans avatar passe d'abord par le créateur d'avatar.
+  useEffect(() => {
+    if (!user || !profile || profile.avatar) return;
+    if (segments[0] !== 'avatar-editor' && segments[0] !== '(auth)') {
+      router.replace({ pathname: '/avatar-editor', params: { onboarding: '1' } });
+    }
+  }, [user, profile, segments, router]);
 
   if (user === undefined) return <LoadingScreen />;
 
@@ -36,6 +44,7 @@ function RootNavigator() {
     >
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="avatar-editor" options={{ title: 'Mon avatar' }} />
       <Stack.Screen name="workout/new" options={{ title: 'Nouvelle séance', presentation: 'modal' }} />
       <Stack.Screen name="exercise-picker" options={{ title: "Bibliothèque d'exercices", presentation: 'modal' }} />
       <Stack.Screen name="admin" options={{ title: 'Labo admin' }} />

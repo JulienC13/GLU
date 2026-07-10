@@ -46,7 +46,15 @@ export default function DojoScreen() {
 
       {/* Avatar + palier */}
       <Card className="mt-5 items-center py-6">
-        <Avatar xp={xp} size={190} />
+        <Pressable
+          onPress={() => router.push('/avatar-editor')}
+          hitSlop={12}
+          accessibilityLabel="Modifier mon avatar"
+          className="absolute right-4 top-4"
+        >
+          <Ionicons name="pencil" size={18} color="#B8B0A0" />
+        </Pressable>
+        <Avatar xp={xp} config={profile?.avatar} size={190} scene />
         <Text className="text-paper text-xl font-extrabold mt-2">{tier.name}</Text>
         <Text className="text-paper-faint text-xs mt-1 text-center px-6">{tier.description}</Text>
         <View className="w-full mt-5">

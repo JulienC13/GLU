@@ -1,5 +1,16 @@
 import type { Timestamp } from 'firebase/firestore';
 
+/** Personnalisation de l'avatar, choisie à la création du compte. */
+export type AvatarConfig = {
+  gender: 'homme' | 'femme';
+  /** Corpulence de départ — la morphologie évolue ensuite avec les grades. */
+  build: 'maigre' | 'moyen' | 'rond';
+  skinTone: string;
+  hairStyle: 'rase' | 'court' | 'chignon' | 'long';
+  hairColor: string;
+  eyeColor: string;
+};
+
 /** Profil utilisateur — document `users/{uid}` */
 export type UserProfile = {
   displayName: string;
@@ -8,6 +19,8 @@ export type UserProfile = {
   sessionsCompleted: number;
   recordsCount: number;
   createdAt: Timestamp;
+  /** Absent tant que l'utilisateur n'a pas créé son avatar (onboarding). */
+  avatar?: AvatarConfig;
 };
 
 /** Exercice défini dans une séance (modèle) */

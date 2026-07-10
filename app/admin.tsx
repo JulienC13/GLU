@@ -152,7 +152,7 @@ export default function AdminScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
         {TIERS.map((t) => (
           <Card key={t.key} className="mr-3 items-center px-5 py-4 w-44">
-            <Avatar xp={t.minXp} size={110} />
+            <Avatar xp={t.minXp} config={profile?.avatar} size={110} />
             <Text className="text-paper font-bold mt-2">{t.name}</Text>
             <Text className="text-paper-faint text-xs text-center mt-1">{t.description}</Text>
           </Card>
