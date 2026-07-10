@@ -1,10 +1,15 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { LogBox } from 'react-native';
 
 import '@/global.css';
 import { LoadingScreen } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/providers/auth-provider';
+
+// Attendu dans Expo Go depuis le SDK 53 : seul le push distant est retiré,
+// nos notifications locales (rappel de fin de repos) restent supportées.
+LogBox.ignoreLogs(['expo-notifications: Android Push notifications']);
 
 function RootNavigator() {
   const { user, profile } = useAuth();
