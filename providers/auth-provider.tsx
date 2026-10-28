@@ -9,6 +9,7 @@ import {
 import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { normalizeAvatar } from '@/lib/avatar-options';
 import { seedDefaultWorkouts } from '@/lib/default-workouts';
 import { auth, db } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/types';
@@ -50,7 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }).catch((e) => console.warn('[GLU] Création du profil impossible', e));
         return;
       }
-      setProfile(snap.data() as UserProfile);
+      const data = snap.data() as UserProfile;
+      setProfile({ ...data, avatar: data.avatar ? normalizeAvatar(data.avatar) : undefined });
     });
   }, [user]);
 

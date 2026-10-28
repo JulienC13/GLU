@@ -1,14 +1,20 @@
 import type { Timestamp } from 'firebase/firestore';
 
-/** Personnalisation de l'avatar, choisie à la création du compte. */
+/**
+ * Personnalisation de l'avatar, façon LaBrute : chaque trait est un index
+ * dans une liste de variantes ou une palette (voir lib/avatar-options.ts).
+ */
 export type AvatarConfig = {
   gender: 'homme' | 'femme';
   /** Corpulence de départ — la morphologie évolue ensuite avec les grades. */
   build: 'maigre' | 'moyen' | 'rond';
-  skinTone: string;
-  hairStyle: 'rase' | 'court' | 'chignon' | 'long';
-  hairColor: string;
-  eyeColor: string;
+  skin: number;
+  hair: number;
+  hairColor: number;
+  eyes: number;
+  eyeColor: number;
+  /** Pilosité faciale — homme uniquement, 0 = aucune. */
+  beard: number;
 };
 
 /** Profil utilisateur — document `users/{uid}` */
